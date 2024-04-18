@@ -1,6 +1,7 @@
 package com.example.stockfeed.Service;
 
 import com.example.stockfeed.Domain.User;
+import com.example.stockfeed.Domain.UserRole;
 import com.example.stockfeed.Dto.SignUpDto;
 import com.example.stockfeed.Repository.UserRepository;
 import com.example.stockfeed.Service.JWT.JwtProvider;
@@ -24,6 +25,7 @@ public class UserService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
+    private final EmailAuthService emailAuthService;
 
     // 회원가입 시 유효성 검사
     public void checkSignUp(SignUpDto signUpDto) {
@@ -31,15 +33,24 @@ public class UserService {
     }
 
     // 회원가입
-    public int SignUp(SignUpDto signUpDto) {
+    public boolean signUpConfirm(int authNumber) {
+        SignUpDto signUpDto = emailAuthService.confirmSignUp(authNumber);
+        if (signUpDto == null) {
+            return false;
+        }
+
+        // 회원 정보를 DB에 저장
         User user = User.builder()
                 .email(signUpDto.getEmail())
                 .password(passwordEncoder.encode(signUpDto.getPassword()))
                 .name(signUpDto.getName())
+                .role(UserRole.valueOf("ROLE_USER"))
                 .build();
         userRepository.save(user);
-        return 1;
+
+        return true;
     }
+
 
 
     // 로그인 ( JWT 토큰 생성 )

@@ -9,12 +9,17 @@ import com.example.stockfeed.Service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
     private final UserService userService;
     private final EmailAuthService emailAuthService;
@@ -44,26 +49,9 @@ public class UserController {
     // 회원가입 2차
     @PostMapping("/signup/confirm")
     public Long signUpConfirm(@RequestBody MailAuthDto mailAuthDto) {
+        boolean result = userService.signUpConfirm(mailAuthDto.getNumber());
 
-        if (!emailAuthService.confirmMail(mailAuthDto.getReceiver(), mailAuthDto.getNumber())) {
-            return 0L;
-        }
-
-        String key = "REGIST:" + mailAuthDto.getReceiver();
-        String value = redisUtil.getData(key);
-        // Redis에서 회원가입 정보 get
-        if (value != null) {
-            SignUpDto signUpDto = null;
-            try {
-                signUpDto = objectMapper.readValue(value, SignUpDto.class);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
-            userService.SignUp(signUpDto);
-            redisUtil.deleteData(key);
-
-        }
-        return 1L;
+        return result ? 1L : 0L;
     }
 
     /**
@@ -73,5 +61,23 @@ public class UserController {
     public JwtToken login(@RequestBody SignUpDto signUpDto) {
         return userService.login(signUpDto.getEmail(), signUpDto.getPassword());
     }
+
+    // user 접근 권한 확인
+    @PostMapping("user/now")
+    public String user() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            log.info("현재 사용자: {}", ((UserDetails) authentication.getPrincipal()).getUsername());
+            log.info("현재 사용자 role: {}", ((UserDetails) authentication.getPrincipal()).getAuthorities());
+
+            return ((UserDetails) authentication.getPrincipal()).getUsername();
+        } else {
+            throw new IllegalStateException("인증된 사용자를 찾을 수 없습니다.");
+        }
+    }
+    /**
+     * 로그아웃
+     */
+
 
 }

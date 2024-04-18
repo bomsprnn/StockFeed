@@ -4,6 +4,7 @@ import com.example.stockfeed.Config.RedisUtil;
 import com.example.stockfeed.Dto.MailAuthDto;
 import com.example.stockfeed.Dto.SignUpDto;
 import com.example.stockfeed.Service.EmailAuthService;
+import com.example.stockfeed.Service.JWT.JwtToken;
 import com.example.stockfeed.Service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,8 +21,11 @@ public class UserController {
     private final RedisUtil redisUtil;
     private final ObjectMapper objectMapper;
 
-    // 회원가입 1차
+    /**
+     * 회원가입
+     */
 
+    // 회원가입 1차
     @PostMapping("/signup")
     public void signUp(@RequestBody SignUpDto signUpDto) {
         userService.checkSignUp(signUpDto);
@@ -60,6 +64,14 @@ public class UserController {
 
         }
         return 1L;
+    }
+
+    /**
+     * 로그인
+     */
+    @PostMapping("/login")
+    public JwtToken login(@RequestBody SignUpDto signUpDto) {
+        return userService.login(signUpDto.getEmail(), signUpDto.getPassword());
     }
 
 }

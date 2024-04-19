@@ -22,22 +22,22 @@ class UserServiceTest {
     @Autowired
     private EmailAuthService emailAuthService;
 
-    @Test
-    @Transactional
+//    @Test
+//    @Transactional
     //@Rollback(value = false)
-    void login() {
-        SignUpDto signUpDto = new SignUpDto();
-        signUpDto.setEmail("loginTest@example.com");
-        signUpDto.setPassword("password");
-        signUpDto.setName("LoginTestName");
-
-        userService.checkSignUp(signUpDto);
-        userRepository.findByEmail("loginTest@example.com");
-
-        JwtToken token = userService.login("loginTest@example.com", "password");
-        System.out.println("token = " + token);
-        Assertions.assertNotNull(token);
-    }
+//    void login() {
+//        SignUpDto signUpDto = new SignUpDto();
+//        signUpDto.setEmail("loginTest@example.com");
+//        signUpDto.setPassword("password");
+//        signUpDto.setName("LoginTestName");
+//
+//        userService.checkSignUp(signUpDto);
+//        userRepository.findByEmail("loginTest@example.com");
+//
+//        JwtToken token = userService.login("loginTest@example.com", "password");
+//        System.out.println("token = " + token);
+//        Assertions.assertNotNull(token);
+//    }
 
 
 

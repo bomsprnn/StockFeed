@@ -3,6 +3,7 @@ package com.example.stockfeed.Controller;
 import com.example.stockfeed.Config.RedisUtil;
 import com.example.stockfeed.Dto.MailAuthDto;
 import com.example.stockfeed.Dto.SignUpDto;
+import com.example.stockfeed.Dto.UserUpdateDto;
 import com.example.stockfeed.Service.EmailAuthService;
 import com.example.stockfeed.Service.JWT.JwtToken;
 import com.example.stockfeed.Service.UserService;
@@ -71,6 +72,21 @@ public class UserController {
     /**
      * 로그아웃
      */
+
+    /**
+     * 회원정보 수정
+     */
+
+    //회원 수정 폼 생성
+    public SignUpDto getUserInfo(@RequestBody String password) {
+        return getUserInfo(password);
+    }
+
+    //회원정보 수정
+    public void updateUserInfo(@RequestPart UserUpdateDto updateDto,
+                               @RequestPart(value = "profileImage") MultipartFile profileImage) {
+        userService.updateUser(updateDto, profileImage);
+    }
 
 
 }

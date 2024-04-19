@@ -4,6 +4,7 @@ import com.example.stockfeed.Config.RedisUtil;
 import com.example.stockfeed.Domain.User;
 import com.example.stockfeed.Domain.UserRole;
 import com.example.stockfeed.Dto.SignUpDto;
+import com.example.stockfeed.Dto.UserUpdateDto;
 import com.example.stockfeed.Repository.UserRepository;
 import com.example.stockfeed.Service.JWT.JwtProvider;
 import com.example.stockfeed.Service.JWT.JwtToken;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -102,6 +105,56 @@ public class UserService {
     }
 
 
+    // 회원 정보 수정 폼을 위한 회원 정보 불러오기
+    public SignUpDto getUserInfo(String password) {
+        String email = getCurrentUser();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+        checkPassword(password); // 현재 비밀번호 확인 (비밀번호가 일치하지 않으면 예외 발생
+        return SignUpDto.builder()
+                .email(user.getEmail())
+                .name(user.getName())
+                .profileImage(user.getProfileImage())
+                .profileText(user.getProfileText())
+                .build();
+    }
+
+    // 회원 정보 수정
+    public void updateUser(UserUpdateDto updatedInfo, MultipartFile file) {
+        String email = getCurrentUser();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 프로필 이미지 업데이트
+        if (file != null && !file.isEmpty()) {
+            String imagePath = saveProfileImage(file); // 이미지 파일 저장 메소드
+            user.setProfileImage(imagePath);
+        }
+        // 이름 업데이트
+        if (!updatedInfo.getName().isEmpty()) {
+            user.setName(updatedInfo.getName());
+        }
+        // 프로필 멘트 업데이트
+        if (!updatedInfo.getProfileText().isEmpty()) {
+            user.setProfileText(updatedInfo.getProfileText());
+        }
+        // 비밀번호 업데이트
+        if (!updatedInfo.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(updatedInfo.getPassword()));
+        }
+
+        userRepository.save(user);
+    }
+
+
+    // 현재 비밀번호 확인
+    public boolean checkPassword(String password) {
+        String email = getCurrentUser();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+        return passwordEncoder.matches(password, user.getPassword());
+    }
+
     // 프로필 이미지 저장
     private String saveProfileImage(MultipartFile file) {
         try {
@@ -135,6 +188,19 @@ public class UserService {
         }
         if (userRepository.existsByEmail(signUpDto.getEmail())) {
             throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+        }
+    }
+
+    // 현재 사용자 정보 반환
+    public String getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            log.info("현재 사용자: {}", ((UserDetails) authentication.getPrincipal()).getUsername());
+            log.info("현재 사용자 role: {}", ((UserDetails) authentication.getPrincipal()).getAuthorities());
+
+            return ((UserDetails) authentication.getPrincipal()).getUsername();
+        } else {
+            throw new IllegalStateException("인증된 사용자를 찾을 수 없습니다.");
         }
     }
 

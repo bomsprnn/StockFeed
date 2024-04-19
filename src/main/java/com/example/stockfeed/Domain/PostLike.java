@@ -19,6 +19,4 @@ public class PostLike extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post; //게시글과 연관관계
-
-
 }

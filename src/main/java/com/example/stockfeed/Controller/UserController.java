@@ -15,7 +15,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,8 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
     private final UserService userService;
     private final EmailAuthService emailAuthService;
-    private final RedisUtil redisUtil;
-    private final ObjectMapper objectMapper;
 
     /**
      * 회원가입
@@ -32,17 +32,9 @@ public class UserController {
 
     // 회원가입 1차
     @PostMapping("/signup")
-    public void signUp(@RequestBody SignUpDto signUpDto) {
-        userService.checkSignUp(signUpDto);
-        String key = "REGIST:" + signUpDto.getEmail();
-        String value = null;
-        try { // 회원가입 정보를 Redis에 저장
-            value = objectMapper.writeValueAsString(signUpDto);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        redisUtil.setDataExpire(key, value, 60 * 6L);
-        // 회원 정보 6분동안 저장 (이메일 인증 duration이 5분이므로 6분으로 설정)
+    public void signUp(@RequestPart("signUpDto") SignUpDto signUpDto,
+                       @RequestPart(value = "profileImage") MultipartFile profileImage) {
+        userService.preSignUp(signUpDto, profileImage); // 회원가입 유효성 검사 및 Redis에 저장
         emailAuthService.sendMail(signUpDto.getEmail()); // 이메일 전송
     }
 
@@ -75,6 +67,7 @@ public class UserController {
             throw new IllegalStateException("인증된 사용자를 찾을 수 없습니다.");
         }
     }
+
     /**
      * 로그아웃
      */

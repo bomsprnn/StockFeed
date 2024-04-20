@@ -30,6 +30,8 @@ public class User extends BaseEntity implements UserDetails {
     private String profileImage;
     private String profileText;
 
+    private LocalDateTime lastLogoutAt;
+
     @Enumerated(EnumType.STRING)
     private UserRole role;
 

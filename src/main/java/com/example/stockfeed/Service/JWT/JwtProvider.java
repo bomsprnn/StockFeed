@@ -14,11 +14,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -29,7 +26,8 @@ public class JwtProvider {
 
 
     // application.yml에서 secret 값 가져와서 key에 저장
-    public JwtProvider(@Value("${jwt.secret}") String secretKey, RedisService redisService) {
+    public JwtProvider(@Value("${jwt.secret}") String secretKey, RedisService redisService, CustomUserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.redisService = redisService;
@@ -47,17 +45,20 @@ public class JwtProvider {
         long now = (new Date()).getTime();
 
         // Access Token 생성
-        Date accessTokenExpiresIn = new Date(now + 86400000);
+        Date accessTokenExpiresIn = new Date(now + 3600000); // 1시간
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authority)
+                .setIssuedAt(new Date(now))
                 .setExpiration(accessTokenExpiresIn)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
         // Refresh Token 생성
         String refreshToken = Jwts.builder()
-                .setExpiration(new Date(now + 86400000))
+                .setSubject(authentication.getName())
+                .setExpiration(new Date(now + 86400000 * 7)) // 7일
+                .setIssuedAt(new Date(now))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
@@ -93,10 +94,19 @@ public class JwtProvider {
     // 토큰 정보를 검증하는 메서드
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseClaimsJws(token)
+                    .getBody();
+            String username = claims.getSubject();
+            long issuedAt = claims.getIssuedAt().getTime();
+            // Redis에서 사용자의 lastLogout timestamp 가져오기
+            Long lastLogout = redisService.getLastLogout(username);
+            if (lastLogout != null && issuedAt < lastLogout) {
+                log.info("Token issued before the last logout. Invalid token.");
+                return false;
+            }
             return true;
         } catch (SecurityException | MalformedJwtException e) {
             log.info("Invalid JWT Token", e);
@@ -106,6 +116,8 @@ public class JwtProvider {
             log.info("Unsupported JWT Token", e);
         } catch (IllegalArgumentException e) {
             log.info("JWT claims string is empty.", e);
+        } catch (Exception e){
+            log.info("Token validation error", e);
         }
         return false;
     }
@@ -116,9 +128,21 @@ public class JwtProvider {
         if (!validateToken(refreshToken)) {
             throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
         }
+        String username = getUsernameFromToken(refreshToken);
+
+        // Redis에서 사용자의 lastLogout timestamp 가져오기
+        Long lastLogout = redisService.getLastLogout(username);
+        if (lastLogout != null) {
+            // 리프레시 토큰의 발급 시간 확인
+            Claims claims = parseClaims(refreshToken);
+            long issuedAt = claims.getIssuedAt().getTime();
+            // 마지막 로그아웃 시간이 토큰 발급 시간보다 뒤인 경우, 토큰 발급 거부
+            if (issuedAt < lastLogout) {
+                throw new RuntimeException("마지막 로그아웃 이후에 발급된 리프레시 토큰이 아닙니다.");
+            }
+        }
 
         // 리프레시 토큰에서 사용자 이름 추출
-        String username = getUsernameFromToken(refreshToken);
         String savedRefreshToken = redisService.getRefreshToken(username);
         if(savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
             throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");

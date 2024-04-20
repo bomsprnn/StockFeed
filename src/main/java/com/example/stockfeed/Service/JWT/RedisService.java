@@ -27,6 +27,15 @@ public class RedisService {
         return values.get(key);
     }
 
+    public void saveLastLogout(String username, long timestamp) {
+       redisTemplate.opsForValue().set("lastLogout:" + username, String.valueOf(timestamp));
+    } // 마지막 로그아웃 시간 저장
+
+    public Long getLastLogout(String username) {
+        String timestamp = redisTemplate.opsForValue().get("lastLogout:" + username);
+        return timestamp != null ? Long.parseLong(timestamp) : null;
+    } // 마지막 로그아웃 시간 가져오기
+
     public void deleteRefreshToken(String key) {
         redisTemplate.delete(key);
     }

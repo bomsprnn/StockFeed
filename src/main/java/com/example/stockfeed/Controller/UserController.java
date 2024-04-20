@@ -5,19 +5,19 @@ import com.example.stockfeed.Dto.MailAuthDto;
 import com.example.stockfeed.Dto.SignUpDto;
 import com.example.stockfeed.Dto.UserUpdateDto;
 import com.example.stockfeed.Service.EmailAuthService;
+import com.example.stockfeed.Service.JWT.JwtProvider;
 import com.example.stockfeed.Service.JWT.JwtToken;
+import com.example.stockfeed.Service.JWT.RefreshTokenRequest;
 import com.example.stockfeed.Service.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
     private final UserService userService;
     private final EmailAuthService emailAuthService;
+    private final JwtProvider jwtProvider;
 
     /**
      * 회원가입
@@ -55,23 +56,19 @@ public class UserController {
         return userService.login(signUpDto.getEmail(), signUpDto.getPassword());
     }
 
-    // user 접근 권한 확인
-    @PostMapping("user/now")
-    public String user() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-            log.info("현재 사용자: {}", ((UserDetails) authentication.getPrincipal()).getUsername());
-            log.info("현재 사용자 role: {}", ((UserDetails) authentication.getPrincipal()).getAuthorities());
-
-            return ((UserDetails) authentication.getPrincipal()).getUsername();
-        } else {
-            throw new IllegalStateException("인증된 사용자를 찾을 수 없습니다.");
-        }
-    }
-
     /**
      * 로그아웃
      */
+    @PostMapping("/user/logout")
+    public void logout() {
+        userService.logout();
+    }
+    @PostMapping("/now/refresh")
+    public ResponseEntity<?> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        String newAccessToken = jwtProvider.refreshAccessToken(refreshTokenRequest.getRefreshToken()).getAccessToken();
+        // 필요하다면 새 리프레시 토큰도 함께 발급
+        return ResponseEntity.ok(newAccessToken);
+    }
 
     /**
      * 회원정보 수정
@@ -88,5 +85,18 @@ public class UserController {
         userService.updateUser(updateDto, profileImage);
     }
 
+    // user 접근 권한 확인
+    @PostMapping("user/now")
+    public String user() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            log.info("현재 사용자: {}", ((UserDetails) authentication.getPrincipal()).getUsername());
+            log.info("현재 사용자 role: {}", ((UserDetails) authentication.getPrincipal()).getAuthorities());
+
+            return ((UserDetails) authentication.getPrincipal()).getUsername();
+        } else {
+            throw new IllegalStateException("인증된 사용자를 찾을 수 없습니다.");
+        }
+    }
 
 }

@@ -41,6 +41,7 @@ public class UserService {
     private final JwtProvider jwtProvider;
     private final EmailAuthService emailAuthService;
     private final RedisUtil redisUtil;
+    private final RedisService redisService;
     private final ObjectMapper objectMapper;
     @Value("${file.storage-path}")
     private String imageStoragePath;
@@ -104,6 +105,14 @@ public class UserService {
         // 3. 인증 객체를 기반으로 JWT 토큰 생성
         return jwtProvider.generateToken(authentication);
 
+    }
+
+    // 로그아웃
+    public int logout() {
+        String email = getCurrentUser();
+        long now = System.currentTimeMillis();
+        redisService.saveLastLogout(email, now);
+        return 1;
     }
 
 

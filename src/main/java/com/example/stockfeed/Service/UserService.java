@@ -221,4 +221,15 @@ public class UserService {
         return userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
     }
+
+    public Long getUserId(String username) {
+        return userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다.")).getId();
+    }
+
+    // 유저 아이디로 유저 정보 반환
+    public User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    }
 }

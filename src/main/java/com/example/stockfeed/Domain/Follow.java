@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class Follow extends BaseEntity {
 
     @Id
@@ -20,5 +21,9 @@ public class Follow extends BaseEntity {
     @JoinColumn(name = "following_id")
     private User following; //팔로잉과 연관관계
 
-
+    @Builder
+    public Follow(User follower, User following) {
+        this.follower = follower;
+        this.following = following;
+    }
 }

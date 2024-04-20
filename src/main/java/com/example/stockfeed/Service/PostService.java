@@ -30,7 +30,7 @@ public class PostService {
     }
 
     // 게시글 수정 폼 빌드 위해 조회
-    public ViewPostDto getPost(Long postId) {
+    public ViewPostDto getPostForUpdate(Long postId) {
         Post post = checkAndGetPost(postId);
         ViewPostDto viewPostDto = ViewPostDto.builder()
                 .title(post.getTitle())
@@ -68,5 +68,19 @@ public class PostService {
         return postRepository.findById(postId).orElseThrow(
                 () -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
     }
+
+    // 게시글 상세 조회
+    public ViewPostDto viewPost(Long postId) {
+        Post post = getPostById(postId);
+        post.addViewCount();
+        return ViewPostDto.builder()
+                .title(post.getTitle())
+                .content(post.getContent())
+                .author(post.getUser().getUsername())
+                .date(post.getCreatedAt().toString())
+                .viewCount(post.getViewCount())
+                .build();
+    }
+
 
 }

@@ -1,13 +1,19 @@
 package com.example.stockfeed.Service;
 
+import com.example.stockfeed.Domain.Comment;
 import com.example.stockfeed.Domain.Post;
+import com.example.stockfeed.Domain.PostLike;
 import com.example.stockfeed.Domain.User;
+import com.example.stockfeed.Dto.CommentDto;
 import com.example.stockfeed.Dto.CreatePostDto;
 import com.example.stockfeed.Dto.ViewPostDto;
+import com.example.stockfeed.Repository.PostLikeRepository;
 import com.example.stockfeed.Repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
     private final PostRepository postRepository;
     private final UserService userService;
+    private final CommentService commentService;
+    private final PostLikeRepository postLikeRepository;
 
     // 게시글 생성
     public void createPost(CreatePostDto createPostDto) {
@@ -73,13 +81,34 @@ public class PostService {
     public ViewPostDto viewPost(Long postId) {
         Post post = getPostById(postId);
         post.addViewCount();
+        List<CommentDto> comments = commentService.getComments(postId);
+        int like = postLikeRepository.countByPost(post);
+        boolean isLiked = postLikeRepository.existsByUserAndPost(userService.getUser(userService.getCurrentUser()), post);
         return ViewPostDto.builder()
+                .comments(comments)
                 .title(post.getTitle())
                 .content(post.getContent())
                 .author(post.getUser().getUsername())
                 .date(post.getCreatedAt().toString())
                 .viewCount(post.getViewCount())
+                .likeCount(like)
+                .isLiked(isLiked)
                 .build();
+    }
+
+    // 포스트 좋아요
+    public void likePost(Long postId) {
+        Post post = getPostById(postId);
+        User user = userService.getUser(userService.getCurrentUser());
+
+        if (postLikeRepository.existsByUserAndPost(user, post)) {
+            throw new IllegalArgumentException("이미 좋아요를 누른 게시글입니다.");
+        }
+        PostLike postLike = PostLike.builder()
+                .user(user)
+                .post(post)
+                .build();
+        postLikeRepository.save(postLike);
     }
 
 

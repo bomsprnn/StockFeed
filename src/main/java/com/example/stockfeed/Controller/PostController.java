@@ -53,5 +53,12 @@ public class PostController {
         postService.updatePost(postId, createPostDto);
     }
 
+    /**
+     * 포스트 좋아요
+     */
+    @PostMapping("/like/{postId}")
+    public void likePost(@PathVariable Long postId) {
+        postService.likePost(postId);
+    }
 
 }

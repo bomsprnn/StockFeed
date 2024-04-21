@@ -150,6 +150,7 @@ public class UserService {
         checkPassword(password); // 현재 비밀번호 확인
         user.updatePassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        logoutForAll();
     }
 
     // 현재 비밀번호 확인

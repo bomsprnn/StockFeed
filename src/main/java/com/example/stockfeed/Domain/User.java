@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Getter @Setter
+@Getter
 @NoArgsConstructor
 public class User extends BaseEntity implements UserDetails {
 
@@ -51,13 +51,17 @@ public class User extends BaseEntity implements UserDetails {
     private List<Follow> followings = new ArrayList<>();
 
     @Builder
-    public User(String email, String password, String name, String profileImage, String profileText, UserRole role) {
+    public User(String email, String password, String name, String profileImage, String profileText, UserRole role,List<Follow> followers, List<Follow> followings) {
         this.email = email;
         this.password = password;
         this.name = name;
         this.profileImage = profileImage;
         this.profileText = profileText;
         this.role = role;
+
+        this.followers = followers;
+        this.followings = followings;
+
         // posts, comments, likes, followers, followings 초기화는 생략
     }
 
@@ -74,7 +78,6 @@ public class User extends BaseEntity implements UserDetails {
     public String getUsername() {
         return this.email;
     }
-
 
     @Override
     public boolean isAccountNonExpired() {
@@ -94,5 +97,21 @@ public class User extends BaseEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public void updateProfileImage(String imagePath) {
+        this.profileImage = imagePath;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateProfileText(String profileText) {
+        this.profileText = profileText;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password; // 실제 사용 시에는 암호화 처리 필요
     }
 }

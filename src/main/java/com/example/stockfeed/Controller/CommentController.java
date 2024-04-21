@@ -3,10 +3,8 @@ package com.example.stockfeed.Controller;
 import com.example.stockfeed.Service.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,23 +18,32 @@ public class CommentController {
      * 댓글 작성
      */
     @PostMapping("/create")
-    public void createComment(Long postId, String content) {
+    public ResponseEntity<String> createComment(Long postId, String content) {
         commentService.createComment(postId, content);
+        return ResponseEntity.ok().body("댓글 작성 완료.");
     }
 
     /**
      * 댓글 삭제
      */
     @DeleteMapping("/delete")
-    public void deleteComment(Long commentId) {
+    public ResponseEntity<String> deleteComment(Long commentId) {
         commentService.deleteComment(commentId);
+        return ResponseEntity.ok().body("댓글 삭제 완료.");
     }
 
     /**
      * 댓글 좋아요
      */
     @PostMapping("/like")
-    public void likeComment(Long commentId) {
+    public ResponseEntity<String> likeComment(Long commentId) {
         commentService.likeComment(commentId);
+        return ResponseEntity.ok().body("댓글 좋아요 완료.");
+    }
+
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

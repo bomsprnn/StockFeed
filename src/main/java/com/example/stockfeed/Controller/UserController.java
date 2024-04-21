@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+
 public class UserController {
     private final UserService userService;
     private final EmailAuthService emailAuthService;
@@ -34,18 +35,18 @@ public class UserController {
 
     // 회원가입 1차
     @PostMapping("/signup")
-    public void signUp(@RequestPart("signUpDto") SignUpDto signUpDto,
-                       @RequestPart(value = "profileImage") MultipartFile profileImage) {
+    public ResponseEntity<String> signUp(@RequestPart("signUpDto") SignUpDto signUpDto,
+                                         @RequestPart(value = "profileImage") MultipartFile profileImage) throws JsonProcessingException {
         userService.preSignUp(signUpDto, profileImage); // 회원가입 유효성 검사 및 Redis에 저장
         emailAuthService.sendMail(signUpDto.getEmail()); // 이메일 전송
+        return ResponseEntity.ok("회원가입 완료.");
     }
 
     // 회원가입 2차
     @PostMapping("/signup/confirm")
-    public Long signUpConfirm(@RequestBody MailAuthDto mailAuthDto) {
+    public ResponseEntity<String> signUpConfirm(@RequestBody MailAuthDto mailAuthDto) {
         boolean result = userService.signUpConfirm(mailAuthDto.getNumber());
-
-        return result ? 1L : 0L;
+        return ResponseEntity.ok(result ? "인증 성공" : "인증 실패");
     }
 
     /**
@@ -59,33 +60,45 @@ public class UserController {
     /**
      * 로그아웃
      */
+    //모든 기기에서 로그아웃 처리
     @PostMapping("/user/logout")
-    public void logout() {
-        userService.logout();
+    public ResponseEntity<String> logoutForAll() {
+        userService.logoutForAll();
+        return ResponseEntity.ok("로그아웃 완료.");
     }
-    @PostMapping("/now/refresh")
-    public ResponseEntity<?> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        String newAccessToken = jwtProvider.refreshAccessToken(refreshTokenRequest.getRefreshToken()).getAccessToken();
-        // 필요하다면 새 리프레시 토큰도 함께 발급
-        return ResponseEntity.ok(newAccessToken);
+
+    //현재 기기에서 로그아웃 처리
+    @PostMapping("/user/logout/now")
+    public ResponseEntity<String> logoutNow(String accessToken){
+        userService.logout(accessToken);
+        return ResponseEntity.ok("로그아웃 완료.");
     }
 
     /**
      * 회원정보 수정
      */
-
     //회원 수정 폼 생성
+    @PostMapping("/user/info")
     public SignUpDto getUserInfo(@RequestBody String password) {
         return getUserInfo(password);
     }
 
     //회원정보 수정
-    public void updateUserInfo(@RequestPart UserUpdateDto updateDto,
+    @PostMapping("/user/update")
+    public ResponseEntity<String> updateUserInfo(@RequestPart UserUpdateDto updateDto,
                                @RequestPart(value = "profileImage") MultipartFile profileImage) {
         userService.updateUser(updateDto, profileImage);
+        return ResponseEntity.ok("회원정보 수정 완료.");
     }
 
-    // user 접근 권한 확인
+    //비밀번호 변경
+    @PostMapping("/user/password")
+    public ResponseEntity<String> updatePassword(@RequestBody String password, String newPassword) {
+        userService.changePassword(password, newPassword);
+        return ResponseEntity.ok("비밀번호 변경 완료.");
+    }
+
+    // user 접근 권한 확인 (삭제 !!!!)
     @PostMapping("user/now")
     public String user() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -97,6 +110,19 @@ public class UserController {
         } else {
             throw new IllegalStateException("인증된 사용자를 찾을 수 없습니다.");
         }
+    }
+
+    /**
+     * 토큰 갱신
+     */
+    @PostMapping("/now/refresh")
+    public ResponseEntity<?> refreshAccessToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        String newAccessToken = jwtProvider.refreshAccessToken(refreshTokenRequest.getRefreshToken()).getAccessToken();
+        return ResponseEntity.ok(newAccessToken);
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 
 }

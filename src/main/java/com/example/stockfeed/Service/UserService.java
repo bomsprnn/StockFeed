@@ -49,7 +49,7 @@ public class UserService {
 
     // 회원가입 시 유효성 검사 + Redis에 저장
     // dto 이메일, 비밀번호, 이름, 프로필 이미지, 인사말
-    public void preSignUp(SignUpDto signUpDto, MultipartFile file) {
+    public void preSignUp(SignUpDto signUpDto, MultipartFile file) throws JsonProcessingException {
         checkavailable(signUpDto);
         String imagePath = null;
         if (file != null && !file.isEmpty()) {
@@ -58,22 +58,17 @@ public class UserService {
         signUpDto.setProfileImage(imagePath); // 이미지 파일 경로 dto에 저장
 
         String key = "REGIST:" + signUpDto.getEmail();
-        String value = null;
-        try { // 회원가입 정보를 Redis에 저장
-            value = objectMapper.writeValueAsString(signUpDto);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        String value = objectMapper.writeValueAsString(signUpDto);
+
         redisUtil.setDataExpire(key, value, 60 * 6L);
-        // 회원 정보 6분동안 저장 (이메일 인증 duration이 5분이므로 6분으로 설정)
+        // 회원 정보 6분동안 저장 (이메일 인증번호 duration이 5분이므로 6분으로 설정)
     }
 
     // 회원가입
     public boolean signUpConfirm(int authNumber) {
         SignUpDto signUpDto = emailAuthService.confirmSignUp(authNumber);
-        if (signUpDto == null) {
-            return false;
-        }
+        if (signUpDto == null) throw new IllegalArgumentException("");
+
         User user = User.builder()
                 .email(signUpDto.getEmail())
                 .password(passwordEncoder.encode(signUpDto.getPassword()))
@@ -83,7 +78,6 @@ public class UserService {
                 .role(UserRole.valueOf("ROLE_USER"))
                 .build();
         userRepository.save(user);
-
         return true;
     }
 
@@ -95,7 +89,6 @@ public class UserService {
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(email, password);
-        log.info("로그인 정보" + authenticationToken.toString() + "이름 " + authenticationToken.getName());
         // 1. Login ID/PW 를 기반으로 Authentication 객체 생성
         // 이때 authentication 는 인증 여부를 확인하는 authenticated 값이 false
         // 2. authenticate 메서드가 실행될 때 CustomUserDetailsService의 loadUserByUsername 메서드가 실행됨
@@ -107,20 +100,22 @@ public class UserService {
 
     }
 
-    // 로그아웃
-    public int logout() {
+    // 전체 로그아웃
+    public void logoutForAll() {
         String email = getCurrentUser();
         long now = System.currentTimeMillis();
         redisService.saveLastLogout(email, now);
-        return 1;
+    }
+
+    // 현재 기기에서 로그아웃
+    public void logout(String accessToken) {
+        jwtProvider.logout(accessToken);
     }
 
 
     // 회원 정보 수정 폼을 위한 회원 정보 불러오기
     public SignUpDto getUserInfo(String password) {
-        String email = getCurrentUser();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+        User user = getCurrentUserEntity();
         checkPassword(password); // 현재 비밀번호 확인 (비밀번호가 일치하지 않으면 예외 발생
         return SignUpDto.builder()
                 .email(user.getEmail())
@@ -132,37 +127,34 @@ public class UserService {
 
     // 회원 정보 수정
     public void updateUser(UserUpdateDto updatedInfo, MultipartFile file) {
-        String email = getCurrentUser();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
+        User user = getCurrentUserEntity();
         // 프로필 이미지 업데이트
         if (file != null && !file.isEmpty()) {
             String imagePath = saveProfileImage(file); // 이미지 파일 저장 메소드
-            user.setProfileImage(imagePath);
+            user.updateProfileImage(imagePath);
         }
         // 이름 업데이트
         if (!updatedInfo.getName().isEmpty()) {
-            user.setName(updatedInfo.getName());
+            user.updateName(updatedInfo.getName());
         }
         // 프로필 멘트 업데이트
         if (!updatedInfo.getProfileText().isEmpty()) {
-            user.setProfileText(updatedInfo.getProfileText());
+            user.updateProfileText(updatedInfo.getProfileText());
         }
-        // 비밀번호 업데이트
-        if (!updatedInfo.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(updatedInfo.getPassword()));
-        }
-
         userRepository.save(user);
     }
 
+    // 비밀번호 변경
+    public void changePassword(String password, String newPassword) {
+        User user = getCurrentUserEntity();
+        checkPassword(password); // 현재 비밀번호 확인
+        user.updatePassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 
     // 현재 비밀번호 확인
-    public boolean checkPassword(String password) {
-        String email = getCurrentUser();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+    private boolean checkPassword(String password) {
+        User user = getCurrentUserEntity();
         return passwordEncoder.matches(password, user.getPassword());
     }
 
@@ -179,7 +171,7 @@ public class UserService {
     }
 
 
-    // 회원가입 시 유효성 검사
+    // 회원가입 시 간단 유효성 검사
     private void checkavailable(SignUpDto signUpDto) { // 유효성 검사
         if (signUpDto.getEmail().isEmpty()) {
             throw new IllegalArgumentException("이메일을 입력해야 합니다.");
@@ -193,7 +185,6 @@ public class UserService {
         if (signUpDto.getName().isEmpty()) {
             throw new IllegalArgumentException("이름을 입력해야 합니다.");
         }
-
         if (signUpDto.getProfileText().isEmpty()) {
             throw new IllegalArgumentException("인사말을 작성해야 합니다.");
         }
@@ -215,6 +206,11 @@ public class UserService {
         }
     }
 
+    // 현재 사용자 반환
+    public User getCurrentUserEntity() {
+        return userRepository.findByEmail(getCurrentUser())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+    }
 
     // 유저 이름으로 유저 정보 반환
     public User getUser(String username) {
@@ -222,12 +218,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
     }
 
-    public Long getUserId(String username) {
-        return userRepository.findByEmail(username)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다.")).getId();
-    }
-
-    // 유저 아이디로 유저 정보 반환
+    // 현재 사용자의 id 반환
     public User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));

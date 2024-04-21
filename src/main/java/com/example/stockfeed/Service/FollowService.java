@@ -21,12 +21,11 @@ public class FollowService {
 
     // 팔로우
     public void follow(Long tofollowId) {
-        String username = userService.getCurrentUser();
-        User follower = userService.getUser(username); // 팔로우 하는 사람
-        Long followerId = follower.getId();
+        User follower = userService.getCurrentUserEntity(); // 팔로우 하는 사람
+        Long followerId = follower.getId();  // 팔로우 하는 사람의 id
 
         User following = userService.getUser(tofollowId); // 팔로우 당하는 사람
-        Long followingId = following.getId();
+        Long followingId = following.getId(); // 팔로우 당하는 사람의 id
 
         if (followerId.equals(followingId)) {
             throw new IllegalArgumentException("자기 자신을 팔로우할 수 없습니다.");
@@ -44,8 +43,8 @@ public class FollowService {
 
     // 언팔로우
     public void unfollow(Long toUnfollowId) {
-        String username = userService.getCurrentUser();
-        User follower = userService.getUser(username); // 언팔로우 하는 사람
+
+        User follower = userService.getCurrentUserEntity(); // 언팔로우 하는 사람
         Long followerId = follower.getId();
 
         User following = userService.getUser(toUnfollowId); // 언팔로우 당하는 사람
@@ -63,8 +62,7 @@ public class FollowService {
 
     // 팔로우 여부 확인
     public boolean isFollowing(Long followingId) {
-        String username = userService.getCurrentUser();
-        User follower = userService.getUser(username);
+        User follower = userService.getCurrentUserEntity();
         Long followerId = follower.getId();
         return followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isPresent();
     }
@@ -87,7 +85,6 @@ public class FollowService {
         }
         return followers;
     }
-
 
     // 팔로잉 목록 반환
     public List<User> getFollowings(Long userId) {

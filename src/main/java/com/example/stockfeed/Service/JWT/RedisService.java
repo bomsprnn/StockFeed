@@ -39,4 +39,15 @@ public class RedisService {
     public void deleteRefreshToken(String key) {
         redisTemplate.delete(key);
     }
+
+    // 로그아웃한 사용자 토큰 블랙리스트에 저장
+    public void saveBlacklist(String token, long duration) {
+        redisTemplate.opsForValue().set(token, "blacklisted", duration, TimeUnit.MILLISECONDS);
+    }
+
+    // 블랙리스트에 있는지 확인
+    public boolean isBlacklisted(String token) {
+        return redisTemplate.hasKey(token);
+    }
+
 }

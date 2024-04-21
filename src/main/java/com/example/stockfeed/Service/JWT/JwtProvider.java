@@ -36,9 +36,6 @@ public class JwtProvider {
     // Member 정보를 가지고 AccessToken, RefreshToken을 생성하는 메서드
     public JwtToken generateToken(Authentication authentication) {
         // 권한 가져오기
-//        String authorities = authentication.getAuthorities().stream()
-//                .map(GrantedAuthority::getAuthority)
-//                .collect(Collectors.joining(","));
         String authority = authentication.getAuthorities().iterator().next().getAuthority();
 
 
@@ -72,6 +69,22 @@ public class JwtProvider {
                 .build();
     }
 
+    //로그아웃
+    public void logout(String accessToken) {
+        Claims claims = parseClaims(accessToken);
+        if (claims == null) {
+            throw new RuntimeException("파싱 실패");
+        }
+        String username = claims.getSubject();
+        Date expiration = claims.getExpiration();
+        long remainingTime = expiration.getTime() - System.currentTimeMillis();
+        //토큰 잔여시간 저장
+        if (remainingTime > 0) {
+            redisService.saveBlacklist(accessToken, remainingTime);
+        } // 토큰 잔여시간이 0보다 크면 블랙리스트에 저장(이를 블랙리스트에 올라가있는 시간으로)
+    }
+
+
     // Jwt 토큰을 복호화하여 토큰에 들어있는 정보를 꺼내는 메서드
     public Authentication getAuthentication(String accessToken) {
         // Jwt 토큰 복호화
@@ -94,6 +107,11 @@ public class JwtProvider {
     // 토큰 정보를 검증하는 메서드
     public boolean validateToken(String token) {
         try {
+            if (redisService.isBlacklisted(token)) {
+                log.info("블랙리스트에 포함된 토큰입니다.");
+                return false;
+            }
+
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
@@ -116,11 +134,12 @@ public class JwtProvider {
             log.info("Unsupported JWT Token", e);
         } catch (IllegalArgumentException e) {
             log.info("JWT claims string is empty.", e);
-        } catch (Exception e){
+        } catch (Exception e) {
             log.info("Token validation error", e);
         }
         return false;
     }
+
 
     // 리프레시 토큰으로 액세스 토큰 재발급
     public JwtToken refreshAccessToken(String refreshToken) {
@@ -144,7 +163,7 @@ public class JwtProvider {
 
         // 리프레시 토큰에서 사용자 이름 추출
         String savedRefreshToken = redisService.getRefreshToken(username);
-        if(savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
+        if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
             throw new RuntimeException("유효하지 않은 리프레시 토큰입니다.");
         }
 
@@ -165,7 +184,6 @@ public class JwtProvider {
         return claims.getSubject();
     }
 
-
     // accessToken
     private Claims parseClaims(String accessToken) {
         try {
@@ -179,5 +197,4 @@ public class JwtProvider {
             return e.getClaims();
         }
     }
-
 }

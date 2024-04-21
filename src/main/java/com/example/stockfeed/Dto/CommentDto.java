@@ -23,6 +23,8 @@ public class CommentDto {
         this.likecount = likecount;
         this.isLiked = isLiked;
     }
+
+
 }
 
 

@@ -1,5 +1,6 @@
 package com.example.stockfeed.Dto;
 
+import com.example.stockfeed.Domain.Comment;
 import lombok.Builder;
 import lombok.Data;
 

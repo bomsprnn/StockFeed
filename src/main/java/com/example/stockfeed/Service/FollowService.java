@@ -5,6 +5,7 @@ import com.example.stockfeed.Domain.User;
 import com.example.stockfeed.Repository.FollowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,8 @@ import java.util.List;
 public class FollowService {
     private final FollowRepository followRepository;
     private final UserService userService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     // 팔로우
     public void follow(Long tofollowId) {
@@ -39,6 +42,7 @@ public class FollowService {
                 .following(following)
                 .build();
         followRepository.save(follow);
+        applicationEventPublisher.publishEvent(follow);
     }
 
     // 언팔로우

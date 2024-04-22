@@ -1,9 +1,11 @@
 package com.example.stockfeed.Service.NewsFeedListener;
 
 import com.example.stockfeed.Domain.Comment;
+import com.example.stockfeed.Domain.Follow;
 import com.example.stockfeed.Domain.Post;
 import com.example.stockfeed.Repository.NewsFeedRepository;
 import com.example.stockfeed.Service.NewsFeedEvent.CommentEvent;
+import com.example.stockfeed.Service.NewsFeedEvent.FollowEvent;
 import com.example.stockfeed.Service.NewsFeedEvent.PostEvent;
 import com.example.stockfeed.Service.NewsFeedService;
 import jakarta.persistence.EntityListeners;
@@ -41,6 +43,19 @@ public class NewsFeedEventListener {
             Comment comment = event.getComment();
             newsFeedRepository.deleteByComment(comment);
             // 댓글 삭제 이벤트 처리
+        }
+    }
+
+    @EventListener
+    public void handleFollowEvent(FollowEvent event) {
+        if (event.getEventType() == FollowEvent.EventType.FOLLOW) {
+            Follow follow = event.getFollow();
+            newsFeedService.createFollowonNewsFeed(follow.getFollower(), follow.getFollowing());
+            // 팔로우 생성 이벤트 처리
+        } else if (event.getEventType() == FollowEvent.EventType.UNFOLLOW) {
+            Follow follow = event.getFollow();
+            newsFeedRepository.deleteByUserAndOwnUser(follow.getFollower(), follow.getFollowing());
+            // 팔로우 삭제 이벤트 처리
         }
     }
 

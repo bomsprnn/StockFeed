@@ -47,13 +47,16 @@ public class PostService {
     // 게시글 수정
     public void updatePost(Long postId, CreatePostDto createPostDto) {
         Post post = checkAndGetPost(postId);
+        applicationEventPublisher.publishEvent(new PostEvent(this, post, PostEvent.EventType.DELETE));
         post.update(createPostDto.getTitle(), createPostDto.getContent());
+        applicationEventPublisher.publishEvent(new PostEvent(this, post, PostEvent.EventType.CREATE));
     }
 
     // 게시글 삭제
     public void deletePost(Long postId) {
         Post post = checkAndGetPost(postId);
         postRepository.delete(post);
+        applicationEventPublisher.publishEvent(new PostEvent(this, post, PostEvent.EventType.DELETE));
     }
 
     // 게시글 조회및 권한 체크

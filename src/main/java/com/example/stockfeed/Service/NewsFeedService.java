@@ -44,8 +44,8 @@ public class NewsFeedService {
     }
 
     // 팔로우한 유저의 뉴스피드에 팔로우 생성
-    public void createFollowonNewsFeed(User user, User ownUser) {
-        List<User> followers = getFollowers(user);
+    public void createFollowonNewsFeed(User user, User ownUser) { //user가 ownUser를 팔로우함
+        List<User> followers = getFollowers(user); //user를 팔로우하는 사람들
         followers.forEach(follower -> createAndSaveNewsFeed(
                 follower, ownUser, null, null, NewsFeedType.FOLLOW));
     }

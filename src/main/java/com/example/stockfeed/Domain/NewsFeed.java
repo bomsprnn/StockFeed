@@ -24,7 +24,7 @@ public class NewsFeed extends BaseEntity {
     private NewsFeedType type; //뉴스피드 타입
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "post_id")
     private Post post; //게시글
 

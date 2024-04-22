@@ -67,7 +67,7 @@ public class UserService {
     // 회원가입
     public boolean signUpConfirm(int authNumber) {
         SignUpDto signUpDto = emailAuthService.confirmSignUp(authNumber);
-        if (signUpDto == null) throw new IllegalArgumentException("");
+        if (signUpDto == null) throw new IllegalArgumentException("인증번호를 확인해주세요.");
 
         User user = User.builder()
                 .email(signUpDto.getEmail())
@@ -85,7 +85,7 @@ public class UserService {
     // 로그인 ( JWT 토큰 생성 )
     public JwtToken login(String email, String password) {
         userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 E-MAIL 입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("로그인 정보가 일치하지 않습니다."));
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(email, password);

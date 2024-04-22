@@ -26,7 +26,6 @@ public class Comment extends BaseEntity{
     private List<CommentLike> commentLikes = new ArrayList<>();
 
     private String content;
-    private int likeCount;
 
 
     @Builder
@@ -34,7 +33,6 @@ public class Comment extends BaseEntity{
         this.user = user;
         this.post = post;
         this.content = content;
-        this.likeCount = 0;
     }
 
     public void update(String content){

@@ -11,7 +11,10 @@ import com.example.stockfeed.Repository.CommentLikeRepository;
 import com.example.stockfeed.Repository.CommentRepository;
 import com.example.stockfeed.Repository.PostLikeRepository;
 import com.example.stockfeed.Repository.PostRepository;
+import com.example.stockfeed.Service.NewsFeedEvent.PostEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +28,10 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserService userService;
     private final PostLikeRepository postLikeRepository;
-    private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    // 게시글 생성
+     // 게시글 생성
     public void createPost(CreatePostDto createPostDto) {
         User user = userService.getCurrentUserEntity();
         Post post = Post.builder()
@@ -38,6 +41,7 @@ public class PostService {
                 .viewCount(0)
                 .build();
         postRepository.save(post);
+       applicationEventPublisher.publishEvent(new PostEvent(this, post, PostEvent.EventType.CREATE));
     }
 
     // 게시글 수정

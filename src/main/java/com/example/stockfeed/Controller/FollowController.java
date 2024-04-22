@@ -1,5 +1,6 @@
 package com.example.stockfeed.Controller;
 
+import com.example.stockfeed.Dto.FollowRequestDto;
 import com.example.stockfeed.Service.FollowService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,17 +18,17 @@ public class FollowController {
      * 팔로우
      */
     @PostMapping("/follow")
-    public ResponseEntity<String> follow(Long tofollowId) {
-        followService.follow(tofollowId);
+    public ResponseEntity<String> follow(@RequestBody FollowRequestDto followRequestDto) {
+        followService.follow(followRequestDto.getToUserId());
         return ResponseEntity.ok("팔로우 완료.");
     }
 
     /**
      * 언팔로우
      */
-    @PostMapping("/unfollow")
-    public ResponseEntity<String> unfollow(Long toUnfollowId) {
-        followService.unfollow(toUnfollowId);
+    @DeleteMapping("/unfollow")
+    public ResponseEntity<String> unfollow(@RequestBody FollowRequestDto followRequestDto) {
+        followService.unfollow(followRequestDto.getToUserId());
         return ResponseEntity.ok("언팔로우 완료.");
     }
 

@@ -1,5 +1,7 @@
 package com.example.stockfeed.Controller;
 
+import com.example.stockfeed.Dto.CommentDto;
+import com.example.stockfeed.Dto.CreateCommentDto;
 import com.example.stockfeed.Service.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +20,8 @@ public class CommentController {
      * 댓글 작성
      */
     @PostMapping("/create")
-    public ResponseEntity<String> createComment(Long postId, String content) {
-        commentService.createComment(postId, content);
+    public ResponseEntity<String> createComment(@RequestBody CreateCommentDto createCommentDto) {
+        commentService.createComment(createCommentDto.getPostId(), createCommentDto.getContent());
         return ResponseEntity.ok().body("댓글 작성 완료.");
     }
 
@@ -27,8 +29,8 @@ public class CommentController {
      * 댓글 삭제
      */
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteComment(Long commentId) {
-        commentService.deleteComment(commentId);
+    public ResponseEntity<String> deleteComment(@RequestBody CommentDto commentId) {
+        commentService.deleteComment(commentId.getId());
         return ResponseEntity.ok().body("댓글 삭제 완료.");
     }
 
@@ -36,8 +38,8 @@ public class CommentController {
      * 댓글 좋아요
      */
     @PostMapping("/like")
-    public ResponseEntity<String> likeComment(Long commentId) {
-        commentService.likeComment(commentId);
+    public ResponseEntity<String> likeComment(@RequestBody CommentDto commentId) {
+        commentService.likeComment(commentId.getId());
         return ResponseEntity.ok().body("댓글 좋아요 완료.");
     }
 

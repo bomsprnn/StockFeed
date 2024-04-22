@@ -1,10 +1,12 @@
 package com.example.stockfeed.Controller;
 
 import com.example.stockfeed.Config.RedisUtil;
+import com.example.stockfeed.Dto.ChangePasswordDto;
 import com.example.stockfeed.Dto.MailAuthDto;
 import com.example.stockfeed.Dto.SignUpDto;
 import com.example.stockfeed.Dto.UserUpdateDto;
 import com.example.stockfeed.Service.EmailAuthService;
+import com.example.stockfeed.Service.JWT.AccessTokenRequest;
 import com.example.stockfeed.Service.JWT.JwtProvider;
 import com.example.stockfeed.Service.JWT.JwtToken;
 import com.example.stockfeed.Service.JWT.RefreshTokenRequest;
@@ -39,7 +41,7 @@ public class UserController {
                                          @RequestPart(value = "profileImage") MultipartFile profileImage) throws JsonProcessingException {
         userService.preSignUp(signUpDto, profileImage); // 회원가입 유효성 검사 및 Redis에 저장
         emailAuthService.sendMail(signUpDto.getEmail()); // 이메일 전송
-        return ResponseEntity.ok("회원가입 완료.");
+        return ResponseEntity.ok("회원가입 요청 완료.");
     }
 
     // 회원가입 2차
@@ -69,8 +71,8 @@ public class UserController {
 
     //현재 기기에서 로그아웃 처리
     @PostMapping("/user/logout/now")
-    public ResponseEntity<String> logoutNow(String accessToken){
-        userService.logout(accessToken);
+    public ResponseEntity<String> logoutNow(@RequestBody AccessTokenRequest accessToken){
+        userService.logout(accessToken.getAccessToken());
         return ResponseEntity.ok("로그아웃 완료.");
     }
 
@@ -78,9 +80,9 @@ public class UserController {
      * 회원정보 수정
      */
     //회원 수정 폼 생성
-    @PostMapping("/user/info")
+    @GetMapping("/user/info")
     public SignUpDto getUserInfo(@RequestBody String password) {
-        return getUserInfo(password);
+        return userService.getUserInfo(password);
     }
 
     //회원정보 수정
@@ -93,8 +95,8 @@ public class UserController {
 
     //비밀번호 변경
     @PostMapping("/user/password")
-    public ResponseEntity<String> updatePassword(@RequestBody String password, String newPassword) {
-        userService.changePassword(password, newPassword);
+    public ResponseEntity<String> updatePassword(@RequestBody ChangePasswordDto changePasswordDto) {
+        userService.changePassword(changePasswordDto.getPassword(), changePasswordDto.getNewPassword());
         return ResponseEntity.ok("비밀번호 변경 완료.");
     }
 

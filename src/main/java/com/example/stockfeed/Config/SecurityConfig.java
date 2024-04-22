@@ -34,7 +34,7 @@ public class SecurityConfig {
                 )
                 // 조건별로 요청 허용/제한 설정
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/signup/**", "/login", "/now/**").permitAll()
+                        .requestMatchers("/signup/**", "/login", "/now/**", "/post/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/user/**").hasRole("USER")
                         .anyRequest().denyAll())

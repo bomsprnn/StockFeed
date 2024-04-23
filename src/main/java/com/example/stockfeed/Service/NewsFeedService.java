@@ -1,13 +1,19 @@
 package com.example.stockfeed.Service;
 
 import com.example.stockfeed.Domain.*;
+import com.example.stockfeed.Dto.NewsFeedDto;
 import com.example.stockfeed.Repository.NewsFeedRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +21,21 @@ import java.util.List;
 @Slf4j
 public class NewsFeedService {
     private final NewsFeedRepository newsFeedRepository;
+
+    public List<NewsFeedDto> getNewsFeedsWithCursor(Long userId, Long cursorId, int size) {
+        PageRequest pageRequest = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "id"));
+        List<NewsFeed> newsFeeds = newsFeedRepository.findNewsFeedsByUserBeforeCursor(userId, cursorId, pageRequest);
+        log.info("뉴스피드 조회 완료"+newsFeeds.size());
+        return newsFeeds.stream().map(newsFeed -> new NewsFeedDto(
+                newsFeed.getId(),
+                newsFeed.getUser().getId(),
+                newsFeed.getOwnUser().getId(),
+                newsFeed.getType().toString(),
+                (newsFeed.getFollowUser() != null) ? newsFeed.getFollowUser().getId() : null,
+                (newsFeed.getPost() != null) ? newsFeed.getPost().getId() : null,
+                (newsFeed.getComment() != null) ? newsFeed.getComment().getId() : null
+        )).collect(Collectors.toList());
+    }
 
 
     // 범용 NewsFeed 생성 및 저장 메서드
@@ -89,27 +110,7 @@ public class NewsFeedService {
                 commentLike.getComment().getUser(), commentLike.getUser(), null, commentLike.getComment(), NewsFeedType.COMMENTLIKE, null);
     }
 
-    // 글에 댓글이 달렸을 때 글의 주인의 뉴스피드에 생성
-    public void createCommentonOwnNewsFeed(Comment comment) {
-        createAndSaveNewsFeed(
-                comment.getPost().getUser(), comment.getUser(), null, comment, NewsFeedType.COMMENT, null);
-    }
-
-    // 글에 좋아요가 눌렸을 때 글의 주인의 뉴스피드에 생성
-    public void createLikeonOwnNewsFeed(PostLike postLike) {
-        createAndSaveNewsFeed(
-                postLike.getPost().getUser(), postLike.getUser(), postLike.getPost(), null, NewsFeedType.POSTLIKE, null);
-    }
-
-    // 댓글에 좋아요가 눌렸을 때 댓글의 주인의 뉴스피드에 생성
-    public void createLikeonOwnNewsFeed(CommentLike commentLike) {
-        createAndSaveNewsFeed(
-                commentLike.getComment().getUser(), commentLike.getUser(), null, commentLike.getComment(), NewsFeedType.COMMENTLIKE, null);
-    }
-
-
     // 팔로우 목록 조회
-
     private List<User> getFollowers(User user) {
         List<User> followers = user.getFollowers().stream()
                 .map(Follow::getFollower)

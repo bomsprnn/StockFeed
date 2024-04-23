@@ -2,10 +2,12 @@ package com.example.stockfeed.Domain;
 
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class NewsFeed extends BaseEntity {
 
     @Id

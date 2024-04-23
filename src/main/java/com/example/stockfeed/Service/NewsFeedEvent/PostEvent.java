@@ -8,16 +8,13 @@ import org.springframework.context.ApplicationEvent;
 public class PostEvent extends ApplicationEvent {
     private final Post post;
     private final EventType eventType;
-
     public enum EventType {
         CREATE,
         DELETE
     }
-
     public PostEvent(Object source, Post post, EventType eventType) {
         super(source);
         this.post = post;
         this.eventType = eventType;
     }
-
 }

@@ -40,6 +40,8 @@ public interface NewsFeedRepository extends JpaRepository<NewsFeed, Long> {
             " AND (:cursorId IS NULL OR nf.id < :cursorId)" +
             " ORDER BY nf.id DESC")
     List<NewsFeed> findNewsFeedsByUserBeforeCursor(@Param("userId") Long userId, @Param("cursorId") Long cursorId, Pageable pageable);
+
+    boolean existsByUserAndFollowUserAndType(User targetUser, User followUser, NewsFeedType type);
 }
 
 

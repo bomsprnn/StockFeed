@@ -46,6 +46,8 @@ public class NewsFeedService {
             exists = newsFeedRepository.existsByUserAndPostAndType(targetUser, post, type);
         } else if (comment != null) {
             exists = newsFeedRepository.existsByUserAndCommentAndType(targetUser, comment, type);
+        }else if (followUser != null) {
+            exists = newsFeedRepository.existsByUserAndFollowUserAndType(targetUser, followUser, type);
         }
         if (exists) { // 원작자가 팔로워인 경우! 뉴스피드에 중복 생성되는 것을 방지
             log.info("이미 생성된 뉴스피드 항목이 있어 중복 생성 되지 않았습니다.");
@@ -90,6 +92,8 @@ public class NewsFeedService {
 
         followersofA.forEach(followerofA -> createAndSaveNewsFeed(
                 followerofA, follower, null, null, NewsFeedType.FOLLOW, followee));
+        createAndSaveNewsFeed( // 원작자의 뉴스피드에도 생성
+                followee, follower, null, null, NewsFeedType.FOLLOW, followee);
     }
 
     // 팔로우한 유저의 뉴스피드에 게시글 좋아요 생성

@@ -19,5 +19,9 @@ public interface NewsFeedRepository extends JpaRepository<NewsFeed, Long> {
     void deleteByOwnUserIdAndPostIdAndType(Long userId, Long postId, NewsFeedType type);
     // 댓글 좋아요취소 시 해당하는 뉴스피드 삭제
     void deleteByCommentAndType(Comment comment, NewsFeedType type);
+
+    boolean existsByUserAndPostAndType(User targetUser, Post post, NewsFeedType type);
+
+    boolean existsByUserAndCommentAndType(User targetUser, Comment comment, NewsFeedType type);
 }
 

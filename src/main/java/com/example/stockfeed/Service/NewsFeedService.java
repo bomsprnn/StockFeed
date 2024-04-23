@@ -36,6 +36,7 @@ public class NewsFeedService {
         List<User> followers = getFollowers(post.getUser());
         followers.forEach(follower -> createAndSaveNewsFeed(
                 follower, post.getUser(), post, null, NewsFeedType.POST, null));
+
     }
 
 
@@ -44,12 +45,14 @@ public class NewsFeedService {
         List<User> followers = getFollowers(comment.getUser());
         followers.forEach(follower -> createAndSaveNewsFeed(
                 follower, comment.getUser(), null, comment, NewsFeedType.COMMENT, null));
+        createAndSaveNewsFeed( // 원작자의 뉴스피드에도 생성
+                comment.getPost().getUser(), comment.getUser(), null, comment, NewsFeedType.COMMENT, null);
     }
 
     // 팔로우한 유저의 뉴스피드에 팔로우 생성
     public void createFollowonNewsFeed(User follower, User followee) { //follower가 followee를 팔로우함
         List<User> followersofA = getFollowers(follower); //user를 팔로우하는 사람들
-        log.info("팔로우하는사람의팔로워 : " + followersofA.get(0).getUsername()+ " " + followersofA.get(1).getUsername());
+        log.info("팔로우하는사람의팔로워 : " + followersofA.get(0).getUsername() + " " + followersofA.get(1).getUsername());
         log.info("팔로우하는사람 : " + follower.getUsername());
         log.info("팔로우당한사람 : " + followee.getUsername());
         log.info(follower.getFollowers().toString());
@@ -63,6 +66,8 @@ public class NewsFeedService {
         List<User> followers = getFollowers(postLike.getUser());
         followers.forEach(follower -> createAndSaveNewsFeed(
                 follower, postLike.getUser(), postLike.getPost(), null, NewsFeedType.POSTLIKE, null));
+        createAndSaveNewsFeed( // 원작자의 뉴스피드에도 생성
+                postLike.getPost().getUser(), postLike.getUser(), postLike.getPost(), null, NewsFeedType.POSTLIKE, null);
     }
 
     // 팔로우한 유저의 뉴스피드에 댓글 좋아요 생성
@@ -70,6 +75,8 @@ public class NewsFeedService {
         List<User> followers = getFollowers(commentLike.getUser());
         followers.forEach(follower -> createAndSaveNewsFeed(
                 follower, commentLike.getUser(), null, commentLike.getComment(), NewsFeedType.COMMENTLIKE, null));
+        createAndSaveNewsFeed( // 원작자의 뉴스피드에도 생성
+                commentLike.getComment().getUser(), commentLike.getUser(), null, commentLike.getComment(), NewsFeedType.COMMENTLIKE, null);
     }
 
     // 글에 댓글이 달렸을 때 글의 주인의 뉴스피드에 생성
@@ -87,7 +94,7 @@ public class NewsFeedService {
     // 댓글에 좋아요가 눌렸을 때 댓글의 주인의 뉴스피드에 생성
     public void createLikeonOwnNewsFeed(CommentLike commentLike) {
         createAndSaveNewsFeed(
-                commentLike.getComment().getUser(), commentLike.getUser(), null, commentLike.getComment(), NewsFeedType.COMMENTLIKE,    null);
+                commentLike.getComment().getUser(), commentLike.getUser(), null, commentLike.getComment(), NewsFeedType.COMMENTLIKE, null);
     }
 
 

@@ -74,6 +74,7 @@ public class NewsFeedEventListener {
         } else if (event.getEventType() == PostLikeEvent.EventType.DELETE) {
             log.info("PostLikeEvent DELETE 호출 완료. 이거 찍히면 repository 수정");
             newsFeedRepository.deleteByOwnUserIdAndPostIdAndType(event.getUser().getId(), event.getPost().getId(), NewsFeedType.POSTLIKE);
+            newsFeedRepository.deleteByOwnUserIdAndPostIdAndType(event.getPost().getUser().getId(), event.getPost().getId(), NewsFeedType.POSTLIKE);
         }
     }
 

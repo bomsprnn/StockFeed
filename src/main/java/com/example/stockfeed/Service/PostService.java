@@ -12,6 +12,7 @@ import com.example.stockfeed.Repository.CommentRepository;
 import com.example.stockfeed.Repository.PostLikeRepository;
 import com.example.stockfeed.Repository.PostRepository;
 import com.example.stockfeed.Service.NewsFeedEvent.PostEvent;
+import com.example.stockfeed.Service.NewsFeedEvent.PostLikeEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -107,6 +108,7 @@ public class PostService {
                 .post(post)
                 .build();
         postLikeRepository.save(postLike);
+        applicationEventPublisher.publishEvent(new PostLikeEvent(this, postLike,null, null,PostLikeEvent.EventType.CREATE));
     }
 
     // 포스트 좋아요 취소
@@ -118,6 +120,7 @@ public class PostService {
             throw new IllegalArgumentException("좋아요를 누르지 않은 게시글입니다.");
         }
         postLikeRepository.deleteByUserAndPost(user, post);
+        applicationEventPublisher.publishEvent(new PostLikeEvent(this, null, post, user, PostLikeEvent.EventType.DELETE));
     }
 
     // 포스트 댓글 가져오기

@@ -44,10 +44,10 @@ public class User extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<PostLike> likes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "following", fetch = FetchType.LAZY)
     private List<Follow> followers = new ArrayList<>();
 
-    @OneToMany(mappedBy = "following", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "follower", fetch = FetchType.LAZY)
     private List<Follow> followings = new ArrayList<>();
 
     @Builder

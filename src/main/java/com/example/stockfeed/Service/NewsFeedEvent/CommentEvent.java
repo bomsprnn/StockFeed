@@ -6,8 +6,8 @@ import org.springframework.context.ApplicationEvent;
 
 @Getter
 public class CommentEvent extends ApplicationEvent {
-    private Comment comment;
-    private EventType eventType;
+    private final Comment comment;
+    private final EventType eventType;
     public enum EventType {
         CREATE,
         DELETE

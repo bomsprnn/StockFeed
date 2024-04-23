@@ -19,9 +19,13 @@ public class NewsFeed extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "own_user_id")
     private User ownUser;
-    //컨텐츠 게시자 (게시글, 댓글 작성자), 혹은 팔로우-팔로잉 대상
+    //컨텐츠 게시자 (게시글, 댓글 작성자), 행위자
     @Enumerated(EnumType.STRING)
     private NewsFeedType type; //뉴스피드 타입
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follow_user_id")
+    private User followUser; //팔로우한 유저
 
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -33,12 +37,13 @@ public class NewsFeed extends BaseEntity {
     private Comment comment; //댓글
 
     @Builder
-    public NewsFeed(User user, User ownUser, NewsFeedType type, Post post, Comment comment) {
+    public NewsFeed(User user, User ownUser, NewsFeedType type, Post post, Comment comment, User followUser) {
         this.user = user;
         this.ownUser = ownUser;
         this.type = type;
         this.post = post;
         this.comment = comment;
+        this.followUser = followUser;
     }
 
 

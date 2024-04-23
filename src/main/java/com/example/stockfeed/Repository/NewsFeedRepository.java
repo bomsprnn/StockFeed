@@ -14,9 +14,9 @@ public interface NewsFeedRepository extends JpaRepository<NewsFeed, Long> {
     // 댓글에 해당하는 뉴스피드 삭제
     void deleteByComment(Comment comment);
     // 팔로워의 뉴스피드에서 언팔로우한 유저의 활동 삭제
-    void deleteByUserAndOwnUser(User user, User ownUser);
+    void deleteByOwnUserIdAndFollowUserId(Long ownUserId, Long followUserId);
     // 게시글 좋아요취소 시 해당하는 뉴스피드 삭제
-    void deleteByPostAndType(Post post, NewsFeedType type);
+    void deleteByOwnUserIdAndPostIdAndType(Long userId, Long postId, NewsFeedType type);
     // 댓글 좋아요취소 시 해당하는 뉴스피드 삭제
     void deleteByCommentAndType(Comment comment, NewsFeedType type);
 }

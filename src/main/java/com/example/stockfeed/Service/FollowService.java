@@ -3,6 +3,7 @@ package com.example.stockfeed.Service;
 import com.example.stockfeed.Domain.Follow;
 import com.example.stockfeed.Domain.User;
 import com.example.stockfeed.Repository.FollowRepository;
+import com.example.stockfeed.Service.NewsFeedEvent.FollowEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,7 +34,7 @@ public class FollowService {
         if (followerId.equals(followingId)) {
             throw new IllegalArgumentException("자기 자신을 팔로우할 수 없습니다.");
         }
-        if(followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isPresent()) {
+        if (followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isPresent()) {
             throw new IllegalArgumentException("이미 팔로우한 사용자입니다.");
         }
 
@@ -42,7 +43,7 @@ public class FollowService {
                 .following(following)
                 .build();
         followRepository.save(follow);
-        applicationEventPublisher.publishEvent(follow);
+        applicationEventPublisher.publishEvent(new FollowEvent(this, follow, followerId, followingId, FollowEvent.EventType.FOLLOW));
     }
 
     // 언팔로우
@@ -57,11 +58,12 @@ public class FollowService {
         if (followerId.equals(followingId)) {
             throw new IllegalArgumentException("자기 자신을 언팔로우할 수 없습니다.");
         }
-        if(followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isEmpty()) {
+        if (followRepository.findByFollowerIdAndFollowingId(followerId, followingId).isEmpty()) {
             throw new IllegalArgumentException("팔로우하지 않은 사용자입니다.");
         }
 
         followRepository.deleteByFollowerIdAndFollowingId(followerId, followingId);
+        applicationEventPublisher.publishEvent(new FollowEvent(this, null, followerId, followingId, FollowEvent.EventType.UNFOLLOW));
     }
 
     // 팔로우 여부 확인
@@ -75,6 +77,7 @@ public class FollowService {
     public int countFollowers(Long userId) {
         return followRepository.countByFollowingId(userId);
     }
+
     // 팔로잉 수 반환
     public int countFollowings(Long userId) {
         return followRepository.countByFollowerId(userId);

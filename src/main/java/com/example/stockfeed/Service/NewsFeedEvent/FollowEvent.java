@@ -6,10 +6,10 @@ import org.springframework.context.ApplicationEvent;
 
 @Getter
 public class FollowEvent extends ApplicationEvent {
-    private Follow follow;
-    private Long followerId;
-    private Long followeeId;
-    private EventType eventType;
+    private final Follow follow;
+    private final Long followerId;
+    private final Long followeeId;
+    private final EventType eventType;
 
     public enum EventType {
         FOLLOW,

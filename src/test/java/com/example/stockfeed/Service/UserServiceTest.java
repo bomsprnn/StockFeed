@@ -1,6 +1,8 @@
 package com.example.stockfeed.Service;
 
+import com.example.stockfeed.Domain.Follow;
 import com.example.stockfeed.Dto.SignUpDto;
+import com.example.stockfeed.Repository.FollowRepository;
 import com.example.stockfeed.Repository.UserRepository;
 import com.example.stockfeed.Service.JWT.JwtToken;
 import org.junit.jupiter.api.Assertions;
@@ -9,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -21,6 +25,10 @@ class UserServiceTest {
     private UserRepository userRepository;
     @Autowired
     private EmailAuthService emailAuthService;
+    @Autowired
+    private FollowService followService;
+    @Autowired
+    private FollowRepository followRepository;
 
 //    @Test
 //    @Transactional
@@ -38,7 +46,13 @@ class UserServiceTest {
 //        System.out.println("token = " + token);
 //        Assertions.assertNotNull(token);
 //    }
-
+    @Test
+    @Transactional
+  void 팔로우테스트() {
+        List<Follow> followER = followRepository.findByFollowingId(1L).stream().toList();
+        System.out.println("follow = " + followER.get(0).getFollower());
+        //System.out.println("follow = " + follow.get(1).getFollowing().getName());
+    }
 
 
 

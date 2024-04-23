@@ -7,8 +7,11 @@ import com.example.stockfeed.Domain.User;
 import com.example.stockfeed.Dto.CommentDto;
 import com.example.stockfeed.Repository.CommentLikeRepository;
 import com.example.stockfeed.Repository.CommentRepository;
+import com.example.stockfeed.Service.NewsFeedEvent.CommentEvent;
+import com.example.stockfeed.Service.NewsFeedEvent.CommentLikeEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ public class CommentService {
     private final PostService postService;
     private final UserService userService;
     private final CommentLikeRepository commentLikeRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     // 댓글 생성
     public void createComment(Long postId, String content) {
@@ -33,6 +37,8 @@ public class CommentService {
                 .post(postService.getPostById(postId))
                 .build();
         commentRepository.save(comment);
+        applicationEventPublisher.publishEvent(new CommentEvent(this, comment, CommentEvent.EventType.CREATE));
+
     }
 
     // 댓글 삭제
@@ -44,6 +50,7 @@ public class CommentService {
             throw new IllegalArgumentException("해당 댓글을 삭제할 권한이 없습니다.");
         }
         commentRepository.delete(comment);
+        applicationEventPublisher.publishEvent(new CommentEvent(this, comment, CommentEvent.EventType.DELETE));
     }
 
     // 댓글 좋아요
@@ -59,6 +66,7 @@ public class CommentService {
                 .comment(comment)
                 .build();
         commentLikeRepository.save(commentLike);
+        applicationEventPublisher.publishEvent(new CommentLikeEvent(this, commentLike));
     }
 
 }

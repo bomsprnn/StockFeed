@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class CommentLike extends BaseEntity{ //댓글 좋아요
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -17,6 +18,12 @@ public class CommentLike extends BaseEntity{ //댓글 좋아요
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id")
     private Comment comment; //댓글과 연관관계
+
+    @Builder
+    public CommentLike(User user, Comment comment){
+        this.user = user;
+        this.comment = comment;
+    }
 
 
 }

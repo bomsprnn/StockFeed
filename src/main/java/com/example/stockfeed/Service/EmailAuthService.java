@@ -1,6 +1,9 @@
 package com.example.stockfeed.Service;
 
 import com.example.stockfeed.Config.RedisUtil;
+import com.example.stockfeed.Dto.SignUpDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.*;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class EmailAuthService {
     private final JavaMailSender javaMailSender;
     private final RedisUtil redisUtil;
+    private final ObjectMapper objectMapper;
     private static final String FROM_ADDRESS = "bomsprin@gmail.com";
     private static final String TITLE = "StockFeed 회원가입 인증 메일입니다.";
     private static int number;
@@ -48,13 +52,30 @@ public class EmailAuthService {
         return number; //인증 번호 반환
     }
 
-    public boolean confirmMail(String mail, int num){
-        String email = redisUtil.getData(String.valueOf(num)); //인증번호로 이메일 조회
-        if(email != null && email.equals(mail)){ //이메일이 존재하고, 일치하면
-            redisUtil.deleteData(String.valueOf(num)); //인증번호 삭제
-            return true;
+
+    public SignUpDto confirmSignUp(int num) {
+        String email = redisUtil.getData(String.valueOf(num)); // 인증번호로 이메일 조회
+        if (email == null) {
+            return null;
         }
-        return false;
+
+        String key = "REGIST:" + email;
+        String value = redisUtil.getData(key);
+        if (value == null) {
+            return null;
+        }
+
+        SignUpDto signUpDto;
+        try {
+            signUpDto = objectMapper.readValue(value, SignUpDto.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        redisUtil.deleteData(String.valueOf(num)); // 인증번호 삭제
+        redisUtil.deleteData(key); // 회원가입 정보 삭제
+
+        return signUpDto;
     }
 
 }

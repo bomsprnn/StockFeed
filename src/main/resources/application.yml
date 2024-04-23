@@ -1,0 +1,54 @@
+spring:
+  devtools:
+    restart:
+      enabled: false
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:13306/test
+    username: root
+    password: example
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: bomsprin@gmail.com
+    password: dblw edpu bytq mqdt
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          timeout: 5000
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        show-sql: true
+        # default_batch_fetch_size: 100
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
+
+
+jwt:
+  secret: c3ByaW5nLWJvb3Qtc2VjdXJpdHktand0LXR1dG9yaWFsLWppd29vbi1zcHJpbmctYm9vdC1zZWN1cml0eS1qd3QtdHV0b3JpYWwK
+
+file:
+  storage-path: "/Users/choibomi/Downloads/StockFeed/src/main/resources/static/imgs/"

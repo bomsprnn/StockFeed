@@ -4,3 +4,4 @@ values (now(), 'admin@localhost.com',  now(), 'host', '$2a$10$0Y6WozbD2Ot0YH5J86
 
 insert into follow (created_at, follower_id, following_id) values (now(), 2, 1);
 delete from follow where follow_id =4;
+

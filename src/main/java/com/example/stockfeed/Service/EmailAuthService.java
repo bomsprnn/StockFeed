@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,8 @@ public class EmailAuthService {
     private final JavaMailSender javaMailSender;
     private final RedisUtil redisUtil;
     private final ObjectMapper objectMapper;
-    private static final String FROM_ADDRESS = "bomsprin@gmail.com";
+    @Value("${spring.mail.username}")
+    private static String FROM_ADDRESS;
     private static final String TITLE = "StockFeed 회원가입 인증 메일입니다.";
     private static int number;
 
